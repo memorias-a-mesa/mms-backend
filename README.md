@@ -3,5 +3,5 @@ Backend desenvolvido para integrar o projeto Memorias à Mesa, como entrega da m
 
 Integrantes do grupo:
 - 210626 - Cainã José Arruda Pinto 223285
-- Isabelle Munhoz Scarso 223663
-- José Antonio Classio Junior
+- 223285 - Isabelle Munhoz Scarso 
+- 223663 - José Antonio Classio Junior
