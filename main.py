@@ -1,10 +1,21 @@
 from fastapi import FastAPI
 from routers.router_receita import router as receitas
+from routers.router_user import router as users
 from models.receita import Receita
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="memorias-a-mesa")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite todas as origens. Substitua por uma lista específica em produção.
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos os métodos HTTP (GET, POST, etc.)
+    allow_headers=["*"],  # Permite todos os cabeçalhos
+)
+
 app.include_router(receitas)
+app.include_router(users)
 
 if __name__ == "__main__":
     import uvicorn
