@@ -8,6 +8,7 @@ from bson.objectid import ObjectId
 from models.users import UserCreate
 from repositories.repository_user import create_new_user
 from service.service_user import check_user_register, manage_user_registration
+import bcrypt
 
 router = APIRouter()
 
