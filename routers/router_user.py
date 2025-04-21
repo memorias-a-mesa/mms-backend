@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 
 from models.users import UserCreate
 from repositories.repository_user import create_new_user
-from service.service_user import check_user_register
+from service.service_user import check_user_register, manage_user_registration
 
 router = APIRouter()
 
@@ -19,8 +19,7 @@ async def create_user(user: UserCreate):
             "email": user.email,
             "password": user.password,
         }
-        await check_user_register(new_user)
-        result = await create_new_user(new_user)
+        await manage_user_registration(new_user)
         return JSONResponse(status_code=201, content={"detail": "User created successfully"})
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
