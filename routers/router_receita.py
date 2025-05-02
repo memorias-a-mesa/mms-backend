@@ -11,7 +11,7 @@ router = APIRouter(prefix="/receitas", tags=["Receitas"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 @router.get("", response_model=List[Receita]) 
-async def retrieve_recipes(current_user: dict = Depends(get_current_user)):
+async def retrieve_recipes():
     try:
         recipes = await get_all_recipes()
         if recipes != []:
