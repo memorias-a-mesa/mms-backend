@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from config.token_utils import verify_access_token
+from models.users import LoginRequest
 from service.service_auth import get_current_user
 from service.service_login import LoginService
 from repositories.repository_login import UserRepository
@@ -15,10 +16,6 @@ router = APIRouter()
 def get_login_service():
     repository = UserRepository()  # Concrete implementation of the repository.
     return LoginService(repository)  # Inject the repository into the service.
-
-class LoginRequest(BaseModel):
-    email: str
-    password: str
 
 @router.post("/login")
 async def login(request: LoginRequest, service: LoginService = Depends(get_login_service)):
