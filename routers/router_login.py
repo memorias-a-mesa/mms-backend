@@ -23,7 +23,3 @@ class LoginRequest(BaseModel):
 @router.post("/login")
 async def login(request: LoginRequest, service: LoginService = Depends(get_login_service)):
     return await service.login(request.email, request.password)
-
-@router.get("/protected")
-async def protected_route(current_user: dict = Depends(get_current_user)):
-    return {"message": "This is a protected route", "user": current_user}
