@@ -14,6 +14,11 @@ class IReceitaRepository(ABC):
         """Cria uma nova receita"""
         pass
 
+    @abstractmethod
+    async def get_max_recipe_id(self) -> int:
+        """Busca o maior ID atual das receitas"""
+        pass
+
 class ReceitaRepositoryMongo(IReceitaRepository):
     async def get_all_recipes(self) -> List[dict]:
         try:
@@ -27,4 +32,16 @@ class ReceitaRepositoryMongo(IReceitaRepository):
             return recipe
         except Exception as e:
             raise Exception(f"Erro ao criar receita: {e}")
+
+    async def get_max_recipe_id(self) -> int:
+        try:
+            # Busca a receita com o maior ID
+            result = await recipes_collection.find_one(
+                filter={},
+                sort=[("id", -1)],  # Ordena por ID em ordem decrescente
+                projection={"id": 1}
+            )
+            return result["id"] if result and "id" in result else 0
+        except Exception as e:
+            raise Exception(f"Erro ao buscar receita: {e}")
 
