@@ -41,6 +41,11 @@ class ReceitaService:
         """Cria uma nova receita"""
         try:
             self.validation_service.validate_recipe_data(recipe_data)
+            
+            # Gera o próximo ID sequencial
+            current_max_id = await self.repository.get_max_recipe_id()
+            recipe_data["id"] = current_max_id + 1
+            
             recipe_data["autorId"] = username
             recipe = await self.repository.create_recipe(recipe_data)
             return Receita(**recipe)
