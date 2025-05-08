@@ -61,7 +61,8 @@ class UserService:
             new_user = {
                 "username": user_data.username,
                 "email": user_data.email,
-                "password": hashed_password
+                "password": hashed_password,
+                "favRecipesID": []  # Inicializando a lista vazia de receitas favoritas
             }
             
             return await self.repository.create_user(new_user)
