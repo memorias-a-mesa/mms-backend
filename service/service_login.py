@@ -1,11 +1,12 @@
+"""
+Serviço de Login
+--------------
+"""
+
+import bcrypt
 from repositories.repository_login import ILoginRepository
-from passlib.context import CryptContext
 from bson import ObjectId
 from config.token_utils import create_access_token
-
-# Password hashing context
-# This is used to hash and verify passwords securely.
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Login Service
 # This class handles the business logic for user login.
@@ -15,7 +16,16 @@ class LoginService:
 
     async def login(self, email: str, password: str):
         user = await self.repository.get_user_by_email(email)
-        if not user or not pwd_context.verify(password, user["password"]):
+        if not user:
+            return {"error": "Invalid credentials"}
+
+        # Verify password using bcrypt directly
+        password_match = bcrypt.checkpw(
+            password.encode('utf-8'),
+            user["password"].encode('utf-8')
+        )
+        
+        if not password_match:
             return {"error": "Invalid credentials"}
 
         # Generate a JWT token for the user

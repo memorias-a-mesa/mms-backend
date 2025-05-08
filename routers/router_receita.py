@@ -1,21 +1,32 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from typing import List
 from models.receita import Receita
 from service.service_auth import get_current_user
-from service.service_receita import get_all_recipes
-from config.token_utils import verify_access_token
+from repositories.repository_receita import ReceitaRepositoryMongo
+from service.service_receita import ReceitaService, ReceitaValidationService
 
 router = APIRouter(prefix="/receitas", tags=["Receitas"])
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+# Dependency Injection
+def get_receita_service():
+    repository = ReceitaRepositoryMongo()
+    validation_service = ReceitaValidationService()
+    return ReceitaService(repository, validation_service)
 
-@router.get("", response_model=List[Receita]) 
-async def retrieve_recipes():
-    try:
-        recipes = await get_all_recipes()
-        if recipes != []:
-            return recipes
-        raise HTTPException(status_code=404, detail="No recipes found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+@router.get("", response_model=List[Receita])
+async def get_recipes(
+    service: ReceitaService = Depends(get_receita_service)
+):
+    """Busca todas as receitas"""
+    return await service.get_recipes()
+
+@router.post("", response_model=Receita, status_code=201)
+async def create_recipe(
+    recipe: Receita,
+    current_user: dict = Depends(get_current_user),
+    service: ReceitaService = Depends(get_receita_service)
+):
+    """Cria uma nova receita"""
+    return await service.create_recipe(recipe.model_dump(), current_user["sub"])
+
