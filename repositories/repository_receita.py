@@ -19,6 +19,11 @@ class IReceitaRepository(ABC):
         """Busca o maior ID atual das receitas"""
         pass
 
+    @abstractmethod
+    async def increment_recipe_rating(self, recipe_id: int) -> bool:
+        """Incrementa a quantidade de avaliações de uma receita"""
+        pass
+
 class ReceitaRepositoryMongo(IReceitaRepository):
     async def get_all_recipes(self) -> List[dict]:
         try:
@@ -35,13 +40,24 @@ class ReceitaRepositoryMongo(IReceitaRepository):
 
     async def get_max_recipe_id(self) -> int:
         try:
-            # Busca a receita com o maior ID
             result = await recipes_collection.find_one(
                 filter={},
-                sort=[("id", -1)],  # Ordena por ID em ordem decrescente
+                sort=[("id", -1)],
                 projection={"id": 1}
             )
             return result["id"] if result and "id" in result else 0
         except Exception as e:
-            raise Exception(f"Erro ao buscar receita: {e}")
+            raise Exception(f"Erro ao buscar maior ID de receita: {e}")
+
+    async def increment_recipe_rating(self, recipe_id: int) -> bool:
+        try:
+            result = await recipes_collection.update_one(
+                {"id": recipe_id},
+                {"$inc": {"qtdAvaliacao": 1}}
+            )
+            if result.modified_count == 0:
+                raise Exception("Recipe not found")
+            return True
+        except Exception as e:
+            raise Exception(f"Error incrementing recipe rating: {e}")
 

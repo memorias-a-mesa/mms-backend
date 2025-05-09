@@ -3,6 +3,7 @@ import re
 import bcrypt
 from models.users import UserCreate
 from repositories.repository_user import IUserRepository
+from repositories.repository_receita import IReceitaRepository
 
 class UserValidationService:
     @staticmethod
@@ -62,7 +63,8 @@ class UserService:
                 "username": user_data.username,
                 "email": user_data.email,
                 "password": hashed_password,
-                "favRecipesID": []  # Inicializando a lista vazia de receitas favoritas
+                "favRecipesID": [],  # Inicializando a lista vazia de receitas favoritas
+                "myRecipes": []  # Inicializando a lista vazia de receitas criadas
             }
             
             return await self.repository.create_user(new_user)
@@ -70,3 +72,21 @@ class UserService:
             raise e
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+
+    async def add_favorite_recipe(self, username: str, recipe_id: int, recipes_collection, receita_repository: IReceitaRepository) -> dict:
+        """Adiciona uma receita aos favoritos do usuário"""
+        try:
+            # Verifica se a receita existe
+            recipe = await recipes_collection.find_one({"id": recipe_id})
+            if not recipe:
+                raise HTTPException(status_code=404, detail="Recipe not found")
+
+            # Adiciona a receita aos favoritos e incrementa qtdAvaliacao
+            await self.repository.add_favorite_recipe(username, recipe_id)
+            await receita_repository.increment_recipe_rating(recipe_id)
+            
+            return {"message": "Recipe added to favorites successfully"}
+        except HTTPException as e:
+            raise e
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error adding favorite recipe: {str(e)}")

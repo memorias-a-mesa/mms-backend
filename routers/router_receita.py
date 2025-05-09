@@ -4,6 +4,7 @@ from typing import List
 from models.receita import Receita
 from service.service_auth import get_current_user
 from repositories.repository_receita import ReceitaRepositoryMongo
+from repositories.repository_user import UserRepositoryMongo
 from service.service_receita import ReceitaService, ReceitaValidationService
 
 router = APIRouter(prefix="/receitas", tags=["Receitas"])
@@ -11,8 +12,9 @@ router = APIRouter(prefix="/receitas", tags=["Receitas"])
 # Dependency Injection
 def get_receita_service():
     repository = ReceitaRepositoryMongo()
+    user_repository = UserRepositoryMongo()
     validation_service = ReceitaValidationService()
-    return ReceitaService(repository, validation_service)
+    return ReceitaService(repository, validation_service, user_repository)
 
 @router.get("", response_model=List[Receita])
 async def get_recipes(
