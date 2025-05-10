@@ -90,3 +90,26 @@ class UserService:
             raise e
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error adding favorite recipe: {str(e)}")
+
+    async def remove_favorite_recipe(self, username: str, recipe_id: int, receita_repository: IReceitaRepository) -> dict:
+        """Remove uma receita dos favoritos do usuário e decrementa a contagem de avaliações"""
+        try:
+            # Remove dos favoritos
+            await self.repository.remove_favorite_recipe(username, recipe_id)
+            
+            # Decrementa a contagem de avaliações
+            await receita_repository.decrement_recipe_rating(recipe_id)
+            
+            return {"message": "Recipe removed from favorites successfully"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error removing favorite recipe: {str(e)}")
+
+    async def get_user_data(self, username: str):
+        """Retorna os dados do usuário"""
+        try:
+            user_data = await self.repository.get_user_data(username)
+            if not user_data:
+                raise HTTPException(status_code=404, detail="User not found")
+            return user_data
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error retrieving user data: {str(e)}")

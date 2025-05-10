@@ -24,6 +24,11 @@ class IReceitaRepository(ABC):
         """Incrementa a quantidade de avaliações de uma receita"""
         pass
 
+    @abstractmethod
+    async def decrement_recipe_rating(self, recipe_id: int) -> bool:
+        """Decrementa a quantidade de avaliações de uma receita"""
+        pass
+
 class ReceitaRepositoryMongo(IReceitaRepository):
     async def get_all_recipes(self) -> List[dict]:
         try:
@@ -60,4 +65,23 @@ class ReceitaRepositoryMongo(IReceitaRepository):
             return True
         except Exception as e:
             raise Exception(f"Error incrementing recipe rating: {e}")
+
+    async def decrement_recipe_rating(self, recipe_id: int) -> bool:
+        try:
+            # Verificamos se a receita existe e tem qtdAvaliacao > 0
+            recipe = await recipes_collection.find_one({"id": recipe_id})
+            if not recipe:
+                raise Exception("Recipe not found")
+            if recipe.get("qtdAvaliacao", 0) <= 0:
+                raise Exception("Rating count already at zero")
+
+            result = await recipes_collection.update_one(
+                {"id": recipe_id},
+                {"$inc": {"qtdAvaliacao": -1}}
+            )
+            if result.modified_count == 0:
+                raise Exception("Failed to update recipe rating")
+            return True
+        except Exception as e:
+            raise Exception(f"Error decrementing recipe rating: {e}")
 
