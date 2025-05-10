@@ -5,9 +5,15 @@ class UserCreate(BaseModel):
     username: str
     email: str
     password: str
-    myRecipes: List[int] = []  # Lista de IDs das receitas criadas pelo usuário
-    favRecipesID: List[int] = []  # Lista de IDs das receitas favoritas
+    myRecipes: List[int] = []
+    favRecipesID: List[int] = []
 
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+class UserData(BaseModel):
+    username: str
+    email: str
+    myRecipes: List[int]
+    favRecipesID: List[int]

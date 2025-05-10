@@ -25,6 +25,14 @@ class IUserRepository(ABC):
     async def add_my_recipe(self, username: str, recipe_id: int):
         pass
 
+    @abstractmethod
+    async def get_user_data(self, username: str):
+        pass
+
+    @abstractmethod
+    async def remove_favorite_recipe(self, username: str, recipe_id: int):
+        pass
+
 class UserRepositoryMongo(IUserRepository):
     async def create_user(self, user_data: dict):
         try:
@@ -68,3 +76,27 @@ class UserRepositoryMongo(IUserRepository):
             return {"message": "Recipe added to user's recipes successfully"}
         except Exception as e:
             raise Exception(f"Error adding recipe to user's recipes: {e}")
+
+    async def get_user_data(self, username: str):
+        try:
+            user = await user_collection.find_one(
+                {"username": username},
+                {"_id": 0, "password": 0}  
+            )
+            if not user:
+                raise Exception("User not found")
+            return user
+        except Exception as e:
+            raise Exception(f"Error retrieving user data: {e}")
+
+    async def remove_favorite_recipe(self, username: str, recipe_id: int):
+        try:
+            result = await user_collection.update_one(
+                {"username": username},
+                {"$pull": {"favRecipesID": recipe_id}}
+            )
+            if result.modified_count == 0:
+                raise Exception("User not found or recipe not in favorites")
+            return {"message": "Recipe removed from favorites successfully"}
+        except Exception as e:
+            raise Exception(f"Error removing favorite recipe: {e}")
