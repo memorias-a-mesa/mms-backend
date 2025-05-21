@@ -83,9 +83,7 @@ async def get_user_recipes_summary(
     try:
         # Verifica se o usuário está acessando suas próprias receitas
         if username != current_user["sub"]:
-            return HTTPException(status_code=403,
-                detail="Você só pode acessar o resumo das suas próprias receitas"
-            )
+            return HTTPException(status_code=403,detail="Você só pode acessar o resumo das suas próprias receitas")
         return await service.get_user_recipes_summary(username)
     except HTTPException as he:
         return he
