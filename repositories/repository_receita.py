@@ -52,8 +52,8 @@ class IReceitaRepository(ABC):
 class ReceitaRepositoryMongo(IReceitaRepository):
     async def get_all_recipes(self) -> List[dict]:
         try:
-            res = await recipes_collection.find().to_list(length=100)
-            return await recipes_collection.find({}, {"_id": 0}).to_list(length=100)
+            res = await recipes_collection.find({}, {"_id": 0}).to_list(length=100)
+            return res
         except Exception as e:
             raise Exception(f"Erro ao buscar receitas: {e}")
 

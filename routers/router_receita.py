@@ -33,18 +33,14 @@ async def create_recipe(
     """Cria uma nova receita"""
     try:
         created_recipe = await service.create_recipe(recipe.model_dump(), current_user["sub"])
-        return created_recipe
+        return JSONResponse(status_code=200, content=created_recipe.model_dump())
     except HTTPException as he:
         return he
     except Exception as e:
         return HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{recipe_id}/favorite", status_code=200)
-async def favorite_recipe(
-    recipe_id: int,
-    current_user: dict = Depends(get_current_user),
-    service: ReceitaService = Depends(get_receita_service)
-):
+async def favorite_recipe(recipe_id: int,current_user: dict = Depends(get_current_user),service: ReceitaService = Depends(get_receita_service)):
     """Adiciona uma receita aos favoritos do usuário"""
     try:
         result = await service.add_favorite_recipe(recipe_id, current_user["sub"])
@@ -87,8 +83,7 @@ async def get_user_recipes_summary(
     try:
         # Verifica se o usuário está acessando suas próprias receitas
         if username != current_user["sub"]:
-            return HTTPException(
-                status_code=403,
+            return HTTPException(status_code=403,
                 detail="Você só pode acessar o resumo das suas próprias receitas"
             )
         return await service.get_user_recipes_summary(username)
