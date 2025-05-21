@@ -7,7 +7,6 @@ from typing import List
 from fastapi import HTTPException
 from models.receita import Receita, Preparo
 from repositories.repository_receita import IReceitaRepository
-from repositories.repository_user import IUserRepository
 
 class ReceitaValidationService:
     @staticmethod
@@ -26,10 +25,9 @@ class ReceitaValidationService:
         return True
 
 class ReceitaService:
-    def __init__(self, repository: IReceitaRepository, validation_service: ReceitaValidationService, user_repository: IUserRepository = None):
+    def __init__(self, repository: IReceitaRepository, validation_service: ReceitaValidationService):
         self.repository = repository
         self.validation_service = validation_service
-        self.user_repository = user_repository
 
     async def get_recipes(self) -> List[Receita]:
         """Busca todas as receitas"""
@@ -50,14 +48,53 @@ class ReceitaService:
             
             recipe_data["autorId"] = username
             recipe = await self.repository.create_recipe(recipe_data)
-
-            # Adiciona o ID da receita à lista de receitas do usuário
-            if self.user_repository:
-                await self.user_repository.add_my_recipe(username, recipe_data["id"])
             
             return Receita(**recipe)
         except HTTPException as e:
             raise e
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erro ao criar receita: {str(e)}")
+
+    async def add_favorite_recipe(self, recipe_id: int, username: str) -> dict:
+        """Adiciona a receita aos favoritos do usuário"""
+        try:
+            return await self.repository.add_favorite_recipe(recipe_id, username)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    async def remove_favorite_recipe(self, recipe_id: int, username: str) -> dict:
+        """Remove a receita dos favoritos do usuário"""
+        try:
+            return await self.repository.remove_favorite_recipe(recipe_id, username)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    async def get_recipes_by_author(self, username: str) -> List[Receita]:
+        """Busca todas as receitas de um autor"""
+        try:
+            recipes = await self.repository.get_recipes_by_author(username)
+            return [Receita(**recipe) for recipe in recipes] if recipes else []
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erro ao buscar receitas do autor: {str(e)}")
+
+    async def get_user_recipes_summary(self, username: str) -> dict:
+        """Retorna um resumo das receitas do usuário, incluindo criadas e favoritadas"""
+        try:
+            # Busca receitas criadas pelo usuário
+            created_recipes = await self.repository.get_recipes_by_author(username)
+            
+            # Busca receitas favoritadas pelo usuário
+            favorited_recipes = await self.repository.get_recipes_by_favorite(username)
+            
+            return {
+                "created_recipes": [Receita(**recipe) for recipe in created_recipes] if created_recipes else [],
+                "favorited_recipes": [Receita(**recipe) for recipe in favorited_recipes] if favorited_recipes else [],
+                "total_created": len(created_recipes),
+                "total_favorited": len(favorited_recipes)
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Erro ao buscar resumo das receitas do usuário: {str(e)}"
+            )
 

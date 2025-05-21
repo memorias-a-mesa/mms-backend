@@ -24,3 +24,4 @@ class Receita(BaseModel):
     observacoesUsuario: str
     autorId: Optional[str] = None
     qtdAvaliacao: int = 0
+    favorited_by: List[str] = []

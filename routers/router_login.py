@@ -17,6 +17,15 @@ def get_login_service():
     repository = UserRepository()  # Concrete implementation of the repository.
     return LoginService(repository)  # Inject the repository into the service.
 
-@router.post("/login")
+@router.post("/login", status_code=200)
 async def login(request: LoginRequest, service: LoginService = Depends(get_login_service)):
-    return await service.login(request.email, request.password)
+    try:
+        result = await service.login(request.email, request.password)
+        
+        if "error" in result:
+            return HTTPException(status_code=401, detail=result["error"])
+        return result
+    except HTTPException as he:
+        return he
+    except Exception as e:
+        return HTTPException(status_code=500, detail=str(e))
