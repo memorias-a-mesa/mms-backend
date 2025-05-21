@@ -3,7 +3,6 @@ import re
 import bcrypt
 from models.users import UserCreate
 from repositories.repository_user import IUserRepository
-from repositories.repository_receita import IReceitaRepository
 
 class UserValidationService:
     @staticmethod
@@ -45,71 +44,37 @@ class UserService:
         self.password_service = PasswordService()
 
     async def create_user(self, user_data: UserCreate):
+        user_valid = False
+        """Cria um novo usuário"""
         try:
-            # Validate email and password
-            await self.validation_service.validate_email(user_data.email)
-            self.validation_service.validate_password(user_data.password)
+            # Verifica se o email já existe
+            existing_user = await self.repository.get_user_by_email(user_data.email)
+            if existing_user:
+               user_valid = True
 
-            # Check if user already exists
-            existing_email = await self.repository.get_user_by_email(user_data.email)
-            existing_username = await self.repository.get_user_by_username(user_data.username)
-            
-            if existing_email or existing_username:
-                raise HTTPException(status_code=400, detail="Username or email already exists")
+            # Verifica se o username já existe
+            existing_user = await self.repository.get_user_by_username(user_data.username)
+            if existing_user:
+                 user_valid = True
 
-            # Hash password and create user
+            # Hash da senha
             hashed_password = self.password_service.hash_password(user_data.password)
-            new_user = {
+              # Prepara os dados do usuário
+            user_dict = {
                 "username": user_data.username,
                 "email": user_data.email,
-                "password": hashed_password,
-                "favRecipesID": [],  # Inicializando a lista vazia de receitas favoritas
-                "myRecipes": []  # Inicializando a lista vazia de receitas criadas
+                "password": hashed_password
             }
-            
-            return await self.repository.create_user(new_user)
-        except HTTPException as e:
-            raise e
+            if user_valid == False:
+                return await self.repository.create_user(user_dict)
+            if user_valid == True:
+                return []
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
-
-    async def add_favorite_recipe(self, username: str, recipe_id: int, recipes_collection, receita_repository: IReceitaRepository) -> dict:
-        """Adiciona uma receita aos favoritos do usuário"""
-        try:
-            # Verifica se a receita existe
-            recipe = await recipes_collection.find_one({"id": recipe_id})
-            if not recipe:
-                raise HTTPException(status_code=404, detail="Recipe not found")
-
-            # Adiciona a receita aos favoritos e incrementa qtdAvaliacao
-            await self.repository.add_favorite_recipe(username, recipe_id)
-            await receita_repository.increment_recipe_rating(recipe_id)
-            
-            return {"message": "Recipe added to favorites successfully"}
-        except HTTPException as e:
-            raise e
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error adding favorite recipe: {str(e)}")
-
-    async def remove_favorite_recipe(self, username: str, recipe_id: int, receita_repository: IReceitaRepository) -> dict:
-        """Remove uma receita dos favoritos do usuário e decrementa a contagem de avaliações"""
-        try:
-            # Remove dos favoritos
-            await self.repository.remove_favorite_recipe(username, recipe_id)
-            
-            # Decrementa a contagem de avaliações
-            await receita_repository.decrement_recipe_rating(recipe_id)
-            
-            return {"message": "Recipe removed from favorites successfully"}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error removing favorite recipe: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
 
     async def get_user_data(self, username: str):
         """Retorna os dados do usuário"""
         try:
-            user_data = await self.repository.get_user_data(username)
-            if not user_data:
-                raise HTTPException(status_code=404, detail="User not found")
-            return user_data
+            return await self.repository.get_user_data(username)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error retrieving user data: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))

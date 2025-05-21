@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from config.database import recipes_collection, user_collection
-from models.receita import Receita
+from config.database import user_collection as user_collection
 from typing import List
 from models.users import UserCreate
 
@@ -15,28 +14,16 @@ class IUserRepository(ABC):
 
     @abstractmethod
     async def get_user_by_username(self, username: str):
-        pass
-
-    @abstractmethod
-    async def add_favorite_recipe(self, username: str, recipe_id: int):
-        pass
-
-    @abstractmethod
-    async def add_my_recipe(self, username: str, recipe_id: int):
-        pass
+        pass    
 
     @abstractmethod
     async def get_user_data(self, username: str):
         pass
 
-    @abstractmethod
-    async def remove_favorite_recipe(self, username: str, recipe_id: int):
-        pass
-
 class UserRepositoryMongo(IUserRepository):
     async def create_user(self, user_data: dict):
         try:
-            await user_collection.insert_one(user_data)
+            res = await user_collection.insert_one(user_data)
             return {"message": "User created successfully"}
         except Exception as e:
             raise Exception(f"Error creating new user: {e}")
@@ -53,30 +40,6 @@ class UserRepositoryMongo(IUserRepository):
         except Exception as e:
             raise Exception(f"Error finding user by username: {e}")
 
-    async def add_favorite_recipe(self, username: str, recipe_id: int):
-        try:
-            result = await user_collection.update_one(
-                {"username": username},
-                {"$addToSet": {"favRecipesID": recipe_id}}  # Using addToSet to avoid duplicates
-            )
-            if result.modified_count == 0:
-                raise Exception("User not found or recipe already in favorites")
-            return {"message": "Recipe added to favorites successfully"}
-        except Exception as e:
-            raise Exception(f"Error adding favorite recipe: {e}")
-
-    async def add_my_recipe(self, username: str, recipe_id: int):
-        try:
-            result = await user_collection.update_one(
-                {"username": username},
-                {"$addToSet": {"myRecipes": recipe_id}}
-            )
-            if result.modified_count == 0:
-                raise Exception("User not found or error adding recipe")
-            return {"message": "Recipe added to user's recipes successfully"}
-        except Exception as e:
-            raise Exception(f"Error adding recipe to user's recipes: {e}")
-
     async def get_user_data(self, username: str):
         try:
             user = await user_collection.find_one(
@@ -88,15 +51,3 @@ class UserRepositoryMongo(IUserRepository):
             return user
         except Exception as e:
             raise Exception(f"Error retrieving user data: {e}")
-
-    async def remove_favorite_recipe(self, username: str, recipe_id: int):
-        try:
-            result = await user_collection.update_one(
-                {"username": username},
-                {"$pull": {"favRecipesID": recipe_id}}
-            )
-            if result.modified_count == 0:
-                raise Exception("User not found or recipe not in favorites")
-            return {"message": "Recipe removed from favorites successfully"}
-        except Exception as e:
-            raise Exception(f"Error removing favorite recipe: {e}")
