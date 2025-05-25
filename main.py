@@ -7,9 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="memorias-a-mesa")
 
+origins = [
+    "https://memoriasamesa-728b.vercel.app",
+    "http://localhost:4200"
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todas as origens. Substitua por uma lista específica em produção.
+    allow_origins=origins,  # Permite todas as origens. Substitua por uma lista específica em produção.
     allow_credentials=True,
     allow_methods=["*"],  # Permite todos os métodos HTTP (GET, POST, etc.)
     allow_headers=["*"],  # Permite todos os cabeçalhos
