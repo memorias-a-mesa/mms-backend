@@ -15,8 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Change to backend folder
-        run: cd mms-backend && cp -r . ../backend-temp
+      - name: Copy project to temp folder
+        run: |
+          mkdir backend-temp
+          cp -r * backend-temp/
+
 
       - name: Set up Python
         uses: actions/setup-python@v5
