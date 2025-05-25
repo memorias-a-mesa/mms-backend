@@ -6,8 +6,6 @@ MONGO_URL = os.environ.get("MONGO_URL")
 
 
 client = MongoClient(MONGO_URL)
-
-
 db = client["memorias"]
 recipes_collection = db["receitas"]
-users_collection = db["usuarios"]
+user_collection = db["usuarios"]
