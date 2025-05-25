@@ -15,8 +15,7 @@ jobs:
       - name: Copy project to temp folder
         run: |
           mkdir backend-temp
-          shopt -s extglob
-          cp -r !(backend-temp) backend-temp/
+          rsync -av --exclude='backend-temp' ./ backend-temp/
 
       - name: Set up Python
         uses: actions/setup-python@v5
