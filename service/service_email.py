@@ -1,5 +1,6 @@
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
+from pytz import timezone
 
 import smtplib
 from email.message import EmailMessage
@@ -18,9 +19,11 @@ repository = UserRepositoryMongo()
 validation_service = UserValidationService()
 user_service = UserService(repository=repository, validation_service=validation_service)
 
+brasil_timezone = timezone("America/Sao_Paulo")
+
 def start_scheduler():
     # Executa toda segunda-feira às 9h da manhã
-    scheduler.add_job(send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=0)
+    scheduler.add_job(send_weekly_emails, 'cron', day_of_week='wed', hour=19, minute=30, timezone=brasil_timezone)
     scheduler.start()
 
 def send_email(to_address: str, subject: str, body: str):
