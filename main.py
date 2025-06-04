@@ -6,13 +6,12 @@ from models.receita import Receita
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from service.service_email import start_scheduler, send_weekly_emails
-from service.service_email import start_scheduler, send_weekly_emails
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     print("Starting scheduler...")
-    start_scheduler()
+    await start_scheduler()
     yield
     # Shutdown
     print("API encerrada.")

@@ -20,9 +20,9 @@ repository = UserRepositoryMongo()
 validation_service = UserValidationService()
 user_service = UserService(repository=repository, validation_service=validation_service)
 
-def start_scheduler():
+async def start_scheduler():
     # Executa toda segunda-feira às 9h da manhã
-    scheduler.add_job(send_weekly_emails, 'cron', day_of_week='wed', hour=19, minute=45)
+    scheduler.add_job(await send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=00)
     scheduler.start()
 
 def send_email(to_address: str, subject: str, body: str):
