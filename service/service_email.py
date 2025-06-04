@@ -8,12 +8,16 @@ from service.service_receita import get_fav_recipes_for_the_week as get_top_reci
 from service.service_user import UserService
 from repositories.repository_user import UserRepositoryMongo
 from service.service_user import UserValidationService
+import logging
 
 email_user = os.getenv("EMAIL")
 email_password = os.getenv("SENHAEMAIL")
 
 brasil_timezone = timezone("America/Sao_Paulo")
 scheduler = BackgroundScheduler(timezone=brasil_timezone)
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Instanciar dependências
 repository = UserRepositoryMongo() 
@@ -25,9 +29,14 @@ def start_scheduler():
     def sync_send_weekly_emails():
         asyncio.run(send_weekly_emails())
 
+    logging.info("Iniciando o scheduler...")
+
     # Executa toda quarta-feira às 20h no horário de Brasília
-    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=10)
+    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=50)
+    logging.info("Job de envio semanal configurado para quarta-feira às 20:50 no horário de Brasília.")
+
     scheduler.start()
+    logging.info("Scheduler iniciado.")
 
 def send_email(to_address: str, subject: str, body: str):
     msg = EmailMessage()
@@ -38,16 +47,19 @@ def send_email(to_address: str, subject: str, body: str):
     email_host = "smtp.gmail.com"
     email_port = 587
 
+    logging.info(f"Enviando e-mail para {to_address} com assunto '{subject}'...")
+
     try:
         with smtplib.SMTP(email_host, int(email_port)) as server:
             server.starttls()
             server.login(email_user, email_password)
             server.send_message(msg)
+            logging.info("E-mail enviado com sucesso.")
     except smtplib.SMTPAuthenticationError as e:
-        print(f"Erro de autenticação SMTP: {e}")
+        logging.error(f"Erro de autenticação SMTP: {e}")
         raise e
     except Exception as e:
-        print(f"Erro ao enviar e-mail: {e}")
+        logging.error(f"Erro ao enviar e-mail: {e}")
         raise e
 
 async def send_weekly_emails():
