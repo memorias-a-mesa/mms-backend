@@ -27,13 +27,14 @@ user_service = UserService(repository=repository, validation_service=validation_
 def start_scheduler():
     # Wrapper síncrono para chamar a função assíncrona
     def sync_send_weekly_emails():
-        asyncio.run(send_weekly_emails())
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(send_weekly_emails())
 
     logging.info("Iniciando o scheduler...")
 
     # Executa toda quarta-feira às 20h no horário de Brasília
-    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=50)
-    logging.info("Job de envio semanal configurado para quarta-feira às 20:50 no horário de Brasília.")
+    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=21, minute=00)
+    logging.info("Job de envio semanal configurado para quarta-feira às 21:00 no horário de Brasília.")
 
     scheduler.start()
     logging.info("Scheduler iniciado.")
