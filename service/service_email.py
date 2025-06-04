@@ -26,7 +26,7 @@ def start_scheduler():
         asyncio.run(send_weekly_emails())
 
     # Executa toda quarta-feira às 20h no horário de Brasília
-    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=0)
+    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=10)
     scheduler.start()
 
 def send_email(to_address: str, subject: str, body: str):
