@@ -78,3 +78,9 @@ class UserService:
             return await self.repository.get_user_data(username)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+    async def get_all_users_emails(self): 
+        try:
+            return await self.repository.get_all_users_emails()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))

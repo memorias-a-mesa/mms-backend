@@ -51,3 +51,15 @@ class UserRepositoryMongo(IUserRepository):
             return user
         except Exception as e:
             raise Exception(f"Error retrieving user data: {e}")
+
+    async def get_all_users_emails(self):
+        try:
+            users_email = user_collection.find({}, {"email": 1})
+            users = []
+            async for user in users_email:
+                if "email" in user:
+                    if user["email"] not in users:
+                        users.append(user["email"])
+            return users
+        except Exception as e:
+            raise Exception(f"Error retrieving all user emails: {e}")

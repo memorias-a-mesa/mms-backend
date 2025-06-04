@@ -49,6 +49,11 @@ class IReceitaRepository(ABC):
         """Busca todas as receitas favoritadas por um usuário"""
         pass
 
+    @abstractmethod
+    async def get_most_favorited_recipes(self) -> List[dict]:
+        """Returns the most favorited recipes"""
+        pass
+
 class ReceitaRepositoryMongo(IReceitaRepository):
     async def get_all_recipes(self) -> List[dict]:
         try:
@@ -154,3 +159,25 @@ class ReceitaRepositoryMongo(IReceitaRepository):
         except Exception as e:
             raise Exception(f"Error getting favorited recipes: {e}")
 
+    async def get_most_favorited_recipes(self) -> List[dict]:
+        try:
+            recipes = [
+                {
+                    "$project": {
+                        "_id": 0,
+                        "nomeReceita": 1,
+                        "descricaoReceita": 1,
+                        "sentimentoReceita": 1,
+                        "imagemReceita": 1,
+                        "qtdAvaliacao": 1
+                    }
+                },
+                {"$sort": {"qtdAvaliacao": -1}},
+                {"$limit": 4}
+            ]
+            
+            recipes = await recipes_collection.aggregate(recipes).to_list(length=4)
+            return recipes
+        except Exception as e:
+            print(f"Error getting most favorited recipes: {e}")
+            return []

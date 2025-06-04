@@ -4,8 +4,20 @@ from routers.router_user import router as users
 from routers.router_login import router as login_router
 from models.receita import Receita
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+from service.service_email import start_scheduler, send_weekly_emails
+from service.service_email import start_scheduler, send_weekly_emails
 
-app = FastAPI(title="memorias-a-mesa")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    print("Starting scheduler...")
+    start_scheduler()
+    yield
+    # Shutdown
+    print("API encerrada.")
+
+app = FastAPI(title="memorias-a-mesa", lifespan=lifespan)
 
 origins = [
     "https://memoriasamesa-728b.vercel.app",
