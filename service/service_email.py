@@ -1,7 +1,7 @@
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from pytz import timezone
-
+import asyncio
 import smtplib
 from email.message import EmailMessage
 from service.service_receita import get_fav_recipes_for_the_week as get_top_recipes
@@ -20,9 +20,13 @@ repository = UserRepositoryMongo()
 validation_service = UserValidationService()
 user_service = UserService(repository=repository, validation_service=validation_service)
 
-async def start_scheduler():
-    # Executa toda segunda-feira às 9h da manhã
-    scheduler.add_job(await send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=00)
+def start_scheduler():
+    # Wrapper síncrono para chamar a função assíncrona
+    def sync_send_weekly_emails():
+        asyncio.run(send_weekly_emails())
+
+    # Executa toda quarta-feira às 20h no horário de Brasília
+    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=0)
     scheduler.start()
 
 def send_email(to_address: str, subject: str, body: str):

@@ -11,7 +11,7 @@ from service.service_email import start_scheduler, send_weekly_emails
 async def lifespan(app: FastAPI):
     # Startup
     print("Starting scheduler...")
-    await start_scheduler()
+    start_scheduler() 
     yield
     # Shutdown
     print("API encerrada.")
