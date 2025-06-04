@@ -12,18 +12,17 @@ from service.service_user import UserValidationService
 email_user = os.getenv("EMAIL")
 email_password = os.getenv("SENHAEMAIL")
 
-scheduler = BackgroundScheduler()
+brasil_timezone = timezone("America/Sao_Paulo")
+scheduler = BackgroundScheduler(timezone=brasil_timezone)
 
 # Instanciar dependências
 repository = UserRepositoryMongo() 
 validation_service = UserValidationService()
 user_service = UserService(repository=repository, validation_service=validation_service)
 
-brasil_timezone = timezone("America/Sao_Paulo")
-
 def start_scheduler():
     # Executa toda segunda-feira às 9h da manhã
-    scheduler.add_job(send_weekly_emails, 'cron', day_of_week='wed', hour=19, minute=30, timezone=brasil_timezone)
+    scheduler.add_job(send_weekly_emails, 'cron', day_of_week='wed', hour=19, minute=45)
     scheduler.start()
 
 def send_email(to_address: str, subject: str, body: str):
