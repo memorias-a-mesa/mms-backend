@@ -37,7 +37,7 @@ def start_scheduler():
     logging.info("Iniciando o scheduler...")
 
     # Executa toda quarta-feira às 21h no horário de Brasília
-    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='mon', hour=17, minute=50)
+    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='mon', hour=18, minute=25)
     logging.info("Job de envio semanal configurado para quarta-feira às 21:08 no horário de Brasília.")
 
     scheduler.start()
