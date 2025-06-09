@@ -34,14 +34,22 @@ def start_scheduler():
         finally:
             loop.close()  
 
-    logging.info("Iniciando o scheduler...")
+    logging.info("Iniciando o método start_scheduler...")
+    logging.info("Configurando o job para envio semanal de emails...")
 
-    # Executa toda quarta-feira às 21h no horário de Brasília
-    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='mon', hour=18, minute=25)
-    logging.info("Job de envio semanal configurado para quarta-feira às 21:08 no horário de Brasília.")
+    # Verificar se o scheduler está ativo
+    if scheduler.running:
+        logging.info("Scheduler já está em execução.")
+    else:
+        logging.info("Iniciando o scheduler pela primeira vez.")
 
+    # Adicionar job
+    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='mon', hour=18, minute=35)
+    logging.info("Job de envio semanal configurado com sucesso.")
+
+    # Iniciar o scheduler
     scheduler.start()
-    logging.info("Scheduler iniciado.")
+    logging.info("Scheduler iniciado com sucesso.")
 
 def send_email(to_address: str, subject: str, body: str):
     msg = EmailMessage()
