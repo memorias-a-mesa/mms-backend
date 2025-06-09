@@ -117,7 +117,7 @@ class WeeklyDigestJobScheduler:
 
         logging.info("Iniciando o scheduler...")
 
-        self.scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=21, minute=8)
+        self.scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='mon', hour=17, minute=10)
         logging.info("Job de envio semanal configurado para quarta-feira às 21:08 no horário de Brasília.")
 
         self.scheduler.start()
