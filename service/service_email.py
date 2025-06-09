@@ -44,7 +44,7 @@ def start_scheduler():
         logging.info("Iniciando o scheduler pela primeira vez.")
 
     # Adicionar job
-    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='mon', hour=18, minute=35)
+    scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='mon', hour=18, minute=45)
     logging.info("Job de envio semanal configurado com sucesso.")
 
     # Iniciar o scheduler
