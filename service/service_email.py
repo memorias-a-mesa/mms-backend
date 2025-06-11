@@ -4,10 +4,12 @@ from pytz import timezone
 import asyncio
 import smtplib
 from email.message import EmailMessage
-from service.service_receita import get_fav_recipes_for_the_week as get_top_recipes
+from service.service_receita import ReceitaService
 from service.service_user import UserService
 from repositories.repository_user import UserRepositoryMongo
 from service.service_user import UserValidationService
+from repositories.repository_receita import ReceitaRepositoryMongo
+from service.service_receita import ReceitaValidationService, ReceitaService
 import logging
 from abc import ABC, abstractmethod
 
@@ -25,11 +27,18 @@ repository = UserRepositoryMongo()
 validation_service = UserValidationService()
 user_service = UserService(repository=repository, validation_service=validation_service)
 
+# Instanciar ReceitaService
+repository_receita = ReceitaRepositoryMongo()
+validation_service_receita = ReceitaValidationService()
+receita_service = ReceitaService(repository_receita, validation_service_receita)
+
+#  Interface abstrata para serviços de e-mail, para que qualquer classe filha implemente o método send_email.
 class EmailService(ABC):
     @abstractmethod
     def send_email(self, to_address: str, subject: str, body: str):
         pass
-
+    
+# Implementação concreta de EmailService usando SMTP
 class SMTPEmailService(EmailService):
     def __init__(self, email_user: str, email_password: str, email_host: str = "smtp.gmail.com", email_port: int = 587):
         self.email_user = email_user
@@ -101,10 +110,12 @@ class EmailContentFormatter:
         )
 
 class SchedulerService:
-    def __init__(self, scheduler: BackgroundScheduler, email_service: EmailService, user_service):
+    def __init__(self, scheduler: BackgroundScheduler, email_service: EmailService, user_service: UserService, receita_service: ReceitaService):
+        # Armazenamento dos serviços como atributos da classe
         self.scheduler = scheduler
         self.email_service = email_service
         self.user_service = user_service
+        self.receita_service = receita_service
 
     def start_scheduler(self):
         def sync_send_weekly_emails():
@@ -123,14 +134,14 @@ class SchedulerService:
         else:
             logging.info("Iniciando o scheduler pela primeira vez.")
 
-        self.scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=11, minute=00)
+        self.scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=18, minute=10)
         logging.info("Job de envio semanal configurado com sucesso.")
 
         self.scheduler.start()
         logging.info("Scheduler iniciado com sucesso.")
 
     async def send_weekly_emails(self):
-        top_recipes = await get_top_recipes()
+        top_recipes = await self.receita_service.get_fav_recipes_for_the_week()
         users = await self.user_service.get_all_users_emails()
 
         email_body = EmailContentFormatter.format_weekly_digest(top_recipes)

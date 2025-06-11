@@ -9,15 +9,6 @@ from models.receita import Receita, Preparo
 from repositories.repository_receita import IReceitaRepository
 from repositories.repository_receita import ReceitaRepositoryMongo
 
-async def get_fav_recipes_for_the_week() -> List[dict]:
-    try:
-        repository = ReceitaRepositoryMongo()
-        recipes = await repository.get_most_favorited_recipes()
-        return recipes if recipes else []
-    except Exception as e:
-        print(f"Error getting favorite recipes: {str(e)}")
-        return []
-
 class ReceitaValidationService:
     @staticmethod
     def validate_recipe_data(recipe_data: dict) -> bool:
@@ -107,3 +98,11 @@ class ReceitaService:
                 status_code=500, 
                 detail=f"Erro ao buscar resumo das receitas do usuário: {str(e)}"
             )
+
+    async def get_fav_recipes_for_the_week(self) -> List[dict]:
+        try:
+            recipes = await self.repository.get_most_favorited_recipes()
+            return recipes if recipes else []
+        except Exception as e:
+            print(f"Error getting favorite recipes: {str(e)}")
+            return []
