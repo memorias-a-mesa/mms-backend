@@ -5,25 +5,13 @@ from routers.router_login import router as login_router
 from models.receita import Receita
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from service.service_email import SchedulerService, SMTPEmailService, user_service, email_user, email_password, scheduler
-from service.service_receita import ReceitaService
-from repositories.repository_receita import ReceitaRepositoryMongo
-from service.service_receita import ReceitaValidationService
+from service.service_email import start_scheduler, send_weekly_emails
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     print("Starting scheduler...")
-    # Instanciar dependências
-    email_service = SMTPEmailService(email_user=email_user, email_password=email_password)
-    repository_receita = ReceitaRepositoryMongo()
-    validation_service_receita = ReceitaValidationService()
-    receita_service = ReceitaService(repository_receita, validation_service_receita)
-    scheduler_service = SchedulerService(scheduler=scheduler, email_service=email_service, user_service=user_service, receita_service=receita_service)
-
-    # Iniciar o scheduler
-    scheduler_service.start_scheduler()
-    
+    start_scheduler() 
     yield
     # Shutdown
     print("API encerrada.")
