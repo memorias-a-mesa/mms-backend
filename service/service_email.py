@@ -134,7 +134,7 @@ class SchedulerService:
         else:
             logging.info("Iniciando o scheduler pela primeira vez.")
 
-        self.scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=35)
+        self.scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=21, minute=15)
         logging.info("Job de envio semanal configurado com sucesso.")
 
         self.scheduler.start()
