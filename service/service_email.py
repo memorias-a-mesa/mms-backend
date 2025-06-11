@@ -1,5 +1,6 @@
 import os
-from apscheduler.schedulers.background import BackgroundScheduler
+# Importar AsyncIOScheduler em vez de BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pytz import timezone
 import asyncio
 import smtplib
@@ -13,26 +14,31 @@ from service.service_receita import ReceitaValidationService, ReceitaService
 import logging
 from abc import ABC, abstractmethod
 
-email_user = os.getenv("EMAIL")
-email_password = os.getenv("SENHAEMAIL")
-
-brasil_timezone = timezone("America/Sao_Paulo")
-scheduler = BackgroundScheduler(timezone=brasil_timezone)
-
 # Configurar logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Instanciar dependências
+# Variáveis de ambiente para o e-mail
+email_user = os.getenv("EMAIL")
+email_password = os.getenv("SENHAEMAIL")
+
+# Configurar o fuso horário para o Brasil
+brasil_timezone = timezone("America/Sao_Paulo")
+
+# Instanciar o scheduler assíncrono
+# MUDANÇA CRUCIAL AQUI: Usando AsyncIOScheduler
+scheduler = AsyncIOScheduler(timezone=brasil_timezone)
+
+# Instanciar dependências do serviço de usuário
 repository = UserRepositoryMongo() 
 validation_service = UserValidationService()
 user_service = UserService(repository=repository, validation_service=validation_service)
 
-# Instanciar ReceitaService
+# Instanciar dependências do serviço de receita
 repository_receita = ReceitaRepositoryMongo()
 validation_service_receita = ReceitaValidationService()
 receita_service = ReceitaService(repository_receita, validation_service_receita)
 
-#  Interface abstrata para serviços de e-mail, para que qualquer classe filha implemente o método send_email.
+# Interface abstrata para serviços de e-mail, para que qualquer classe filha implemente o método send_email.
 class EmailService(ABC):
     @abstractmethod
     def send_email(self, to_address: str, subject: str, body: str):
@@ -40,7 +46,7 @@ class EmailService(ABC):
     
 # Implementação concreta de EmailService usando SMTP
 class SMTPEmailService(EmailService):
-    def __init__(self, email_user: str, email_password: str, email_host: str = "smtp.gmail.com", email_port: int = 587):
+    def _init_(self, email_user: str, email_password: str, email_host: str = "smtp.gmail.com", email_port: int = 587):
         self.email_user = email_user
         self.email_password = email_password
         self.email_host = email_host
@@ -100,8 +106,8 @@ class EmailContentFormatter:
             f"    {recipe_list}\n"
             f"    <div style='text-align: center; margin-top: 30px;'>\n"
             f"      <a href='https://memoriasamesa-728b.vercel.app/listareceitas' "
-            f"         style='display: inline-block; padding: 12px 24px; background-color: #ff5722; color: white; "
-            f"         text-decoration: none; border-radius: 6px; font-size: 15px;'>🍲 Ver Receitas</a>\n"
+            f"        style='display: inline-block; padding: 12px 24px; background-color: #ff5722; color: white; "
+            f"        text-decoration: none; border-radius: 6px; font-size: 15px;'>🍲 Ver Receitas</a>\n"
             f"    </div>\n"
             f"    <p style='text-align: center; margin-top: 30px; font-size: 14px; color: #999;'>Com carinho,<br>Equipe Memórias à Mesa 💛</p>\n"
             f"  </div>\n"
@@ -110,7 +116,7 @@ class EmailContentFormatter:
         )
 
 class SchedulerService:
-    def __init__(self, scheduler: BackgroundScheduler, email_service: EmailService, user_service: UserService, receita_service: ReceitaService):
+    def _init_(self, scheduler: AsyncIOScheduler, email_service: EmailService, user_service: UserService, receita_service: ReceitaService):
         # Armazenamento dos serviços como atributos da classe
         self.scheduler = scheduler
         self.email_service = email_service
@@ -118,13 +124,8 @@ class SchedulerService:
         self.receita_service = receita_service
 
     def start_scheduler(self):
-        def sync_send_weekly_emails():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                loop.run_until_complete(self.send_weekly_emails())
-            finally:
-                loop.close()
+        # REMOVIDO: a função sync_send_weekly_emails e o gerenciamento manual do loop
+        #           O AsyncIOScheduler gerencia isso por você.
 
         logging.info("Iniciando o método start_scheduler...")
         logging.info("Configurando o job para envio semanal de emails...")
@@ -134,19 +135,29 @@ class SchedulerService:
         else:
             logging.info("Iniciando o scheduler pela primeira vez.")
 
-        self.scheduler.add_job(sync_send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=00)
+        # MUDANÇA CRUCIAL AQUI: Adicionando a função async diretamente ao scheduler
+        self.scheduler.add_job(self.send_weekly_emails, 'cron', day_of_week='wed', hour=20, minute=15)
         logging.info("Job de envio semanal configurado com sucesso.")
 
-        self.scheduler.start()
-        logging.info("Scheduler iniciado com sucesso.")
+        # O scheduler será iniciado pela função lifespan do FastAPI, não aqui.
+        # self.scheduler.start() # Removido para evitar múltiplas chamadas de start
+        logging.info("Scheduler configurado. Aguardando o início do FastAPI.")
 
     async def send_weekly_emails(self):
-        top_recipes = await self.receita_service.get_fav_recipes_for_the_week()
-        users = await self.user_service.get_all_users_emails()
+        logging.info("Executando send_weekly_emails (assíncrono)...")
+        try:
+            top_recipes = await self.receita_service.get_fav_recipes_for_the_week()
+            users = await self.user_service.get_all_users_emails()
 
-        email_body = EmailContentFormatter.format_weekly_digest(top_recipes)
+            email_body = EmailContentFormatter.format_weekly_digest(top_recipes)
 
-        for user in users:
-            self.email_service.send_email(user, "💌 Memórias que aquecem: veja as receitas mais amadas da semana", email_body)
+            for user_email in users: # Renomeado 'user' para 'user_email' para clareza
+                # A função send_email é síncrona, então não precisa de await
+                self.email_service.send_email(user_email, "💌 Memórias que aquecem: veja as receitas mais amadas da semana", email_body)
+            logging.info("Todos os e-mails semanais foram processados.")
+        except Exception as e:
+            logging.error(f"Erro na execução de send_weekly_emails: {e}")
+            # Você pode querer relançar a exceção ou lidar com ela de forma mais granular
+            # raise e
 
-__all__ = ["start_scheduler", "send_weekly_emails"]
+_all_ = ["start_scheduler", "send_weekly_emails"] # 'start_scheduler' não é importado diretamente, mas é um bom hábito.
